@@ -1,6 +1,9 @@
 package com.lildutils.springboot.crud.service.impl;
 
 import java.io.Serializable;
+import java.util.Collection;
+import java.util.stream.Collectors;
+import java.util.stream.StreamSupport;
 
 import org.springframework.beans.BeanUtils;
 
@@ -10,11 +13,14 @@ import com.lildutils.springboot.crud.service.LDuCrudService;
 import com.lildutils.springboot.crud.service.dto.LDuCrudDTO;
 import com.lildutils.springboot.crud.service.ex.LDuEntityAlreadyExistsException;
 import com.lildutils.springboot.crud.service.ex.LDuEntityNotFoundException;
+import com.lildutils.springboot.crud.service.helper.LDuServiceHelper;
 
 public abstract class LDuAbstractCrudServiceImpl<TDTO extends LDuCrudDTO<TID>, TMODEL extends LDuCrudModel<TID>, TID extends Serializable>
 		implements LDuCrudService<TDTO>
 {
 	protected abstract LDuCrudRepository<TMODEL, TID> getRepository();
+
+	protected abstract LDuServiceHelper<TDTO, TMODEL> getHelper();
 
 	protected abstract TDTO convert( TMODEL model );
 
@@ -102,6 +108,29 @@ public abstract class LDuAbstractCrudServiceImpl<TDTO extends LDuCrudDTO<TID>, T
 		TMODEL model = getRepository().findById( dto.getId() ).get();
 		getRepository().delete( model );
 		return convert( model );
+	}
+
+	@Override
+	public Collection<TDTO> list()
+	{
+		return doList();
+	}
+
+	protected Collection<TDTO> doList()
+	{
+		return StreamSupport.stream( getRepository().findAll().spliterator(), false ).map( this::convert )
+				.collect( Collectors.toList() );
+	}
+
+	@Override
+	public long count()
+	{
+		return doCount();
+	}
+
+	protected long doCount()
+	{
+		return getRepository().count();
 	}
 
 }
