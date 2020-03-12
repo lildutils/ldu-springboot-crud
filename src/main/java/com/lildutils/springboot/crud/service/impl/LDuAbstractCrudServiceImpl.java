@@ -2,47 +2,46 @@ package com.lildutils.springboot.crud.service.impl;
 
 import java.io.Serializable;
 import java.util.Collection;
-import java.util.stream.Collectors;
-import java.util.stream.StreamSupport;
 
-import org.springframework.beans.BeanUtils;
+import org.springframework.data.repository.CrudRepository;
 
-import com.lildutils.springboot.crud.persistence.model.LDuCrudModel;
-import com.lildutils.springboot.crud.persistence.repository.LDuCrudRepository;
+import com.lildutils.springboot.crud.model.LDuCrudModel;
 import com.lildutils.springboot.crud.service.LDuCrudService;
 import com.lildutils.springboot.crud.service.dto.LDuCrudDTO;
 import com.lildutils.springboot.crud.service.ex.LDuEntityAlreadyExistsException;
 import com.lildutils.springboot.crud.service.ex.LDuEntityNotFoundException;
-import com.lildutils.springboot.crud.service.helper.LDuServiceHelper;
 
 public abstract class LDuAbstractCrudServiceImpl<TDTO extends LDuCrudDTO<TID>, TMODEL extends LDuCrudModel<TID>, TID extends Serializable>
 		implements LDuCrudService<TDTO>
 {
-	protected abstract LDuCrudRepository<TMODEL, TID> getRepository();
+	protected abstract CrudRepository<TMODEL, TID> getRepository();
 
-	protected abstract LDuServiceHelper<TDTO, TMODEL> getHelper();
+	protected abstract boolean doCheckExists( TDTO dto );
 
-	protected abstract TDTO convert( TMODEL model );
+	protected abstract boolean doCheckUniqueness( TDTO dto );
 
-	protected abstract TMODEL convert( TDTO dto );
+	protected abstract TDTO doCreate( TDTO dto );
 
-	/**
-	 * Checks if the entity has uniqueness constraint(s).
-	 * 		
-	 * @param {@link LDuCrudDTO} the entity DTO
-	 * @return true, if the entity is unique in the database
-	 */
-	protected abstract boolean checkUniqueness( TDTO dto );
+	protected abstract TDTO doRead( TDTO dto );
 
-	/**
-	 * Checks if the entity has exists constraint(s).
-	 * 
-	 * @param {@link LDuCrudDTO} the entity DTO
-	 * @return true, if the entity is exists in the database
-	 */
-	protected boolean checkExists( TDTO dto )
+	protected abstract TDTO doUpdate( TDTO dto );
+
+	protected abstract TDTO doDelete( TDTO dto );
+
+	protected abstract Collection<TDTO> doList();
+
+	protected abstract long doCount();
+
+	@Override
+	public boolean checkExists( TDTO dto )
 	{
-		return getRepository().findById( dto.getId() ).isPresent();
+		return doCheckExists( dto );
+	}
+
+	@Override
+	public boolean checkUniqueness( TDTO dto )
+	{
+		return doCheckUniqueness( dto );
 	}
 
 	@Override
@@ -55,11 +54,6 @@ public abstract class LDuAbstractCrudServiceImpl<TDTO extends LDuCrudDTO<TID>, T
 		return doCreate( dto );
 	}
 
-	protected TDTO doCreate( TDTO dto )
-	{
-		return convert( getRepository().save( convert( dto ) ) );
-	}
-
 	@Override
 	public TDTO read( TDTO dto )
 	{
@@ -68,11 +62,6 @@ public abstract class LDuAbstractCrudServiceImpl<TDTO extends LDuCrudDTO<TID>, T
 			throw new LDuEntityNotFoundException();
 		}
 		return doRead( dto );
-	}
-
-	protected TDTO doRead( TDTO dto )
-	{
-		return convert( getRepository().findById( dto.getId() ).get() );
 	}
 
 	@Override
@@ -85,29 +74,14 @@ public abstract class LDuAbstractCrudServiceImpl<TDTO extends LDuCrudDTO<TID>, T
 		return doUpdate( dto );
 	}
 
-	protected TDTO doUpdate( TDTO dto )
-	{
-		TMODEL model = getRepository().findById( dto.getId() ).get();
-		TMODEL update = convert( dto );
-		BeanUtils.copyProperties( update, model, "id" );
-		return convert( getRepository().save( model ) );
-	}
-
 	@Override
 	public TDTO delete( TDTO dto )
-	{
-		return doDelete( dto );
-	}
-
-	protected TDTO doDelete( TDTO dto )
 	{
 		if( !checkExists( dto ) )
 		{
 			throw new LDuEntityNotFoundException();
 		}
-		TMODEL model = getRepository().findById( dto.getId() ).get();
-		getRepository().delete( model );
-		return convert( model );
+		return doDelete( dto );
 	}
 
 	@Override
@@ -116,21 +90,10 @@ public abstract class LDuAbstractCrudServiceImpl<TDTO extends LDuCrudDTO<TID>, T
 		return doList();
 	}
 
-	protected Collection<TDTO> doList()
-	{
-		return StreamSupport.stream( getRepository().findAll().spliterator(), false ).map( this::convert )
-				.collect( Collectors.toList() );
-	}
-
 	@Override
 	public long count()
 	{
 		return doCount();
-	}
-
-	protected long doCount()
-	{
-		return getRepository().count();
 	}
 
 }

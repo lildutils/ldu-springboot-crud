@@ -4,6 +4,10 @@ import java.util.Collection;
 
 public interface LDuCrudService<TDTO>
 {
+	boolean checkExists( TDTO dto );
+
+	boolean checkUniqueness( TDTO dto );
+
 	TDTO create( TDTO dto );
 
 	TDTO read( TDTO dto );

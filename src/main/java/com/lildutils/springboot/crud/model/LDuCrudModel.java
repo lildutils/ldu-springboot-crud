@@ -1,4 +1,4 @@
-package com.lildutils.springboot.crud.persistence.model;
+package com.lildutils.springboot.crud.model;
 
 public interface LDuCrudModel<TID>
 {

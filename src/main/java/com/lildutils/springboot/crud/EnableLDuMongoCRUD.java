@@ -8,13 +8,13 @@ import java.lang.annotation.Target;
 
 import org.springframework.context.annotation.Import;
 
-import com.lildutils.springboot.crud.config.LDuCrudConfigurer;
+import com.lildutils.springboot.crud.mongo.config.LDuMongoCrudConfigurer;
 
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.TYPE)
 @Documented
-@Import(LDuCrudConfigurer.class)
-public @interface EnableLDuCRUD
+@Import(LDuMongoCrudConfigurer.class)
+public @interface EnableLDuMongoCRUD
 {
 
 }
